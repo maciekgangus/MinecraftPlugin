@@ -30,7 +30,7 @@ dependencies {
     // Note: requires shadow plugin with ASM 9.8+ support
 
     testImplementation("io.papermc.paper:paper-api:$paperVersion")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.101.0")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.45.0")
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
