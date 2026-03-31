@@ -1,6 +1,7 @@
 package dev.casino.games;
 
 import dev.casino.core.PluginContext;
+import dev.casino.games.blackjack.BlackjackGame;
 
 /**
  * Single point of truth for game registration.
@@ -25,5 +26,6 @@ public final class GameRegistrar {
         // context.games().register(new SlotsGame(context));
         // context.games().register(new BlackjackGame(context));
         // ─────────────────────────────────────────────────────────────────
+        context.games().register(new BlackjackGame(context));
     }
 }
