@@ -39,6 +39,18 @@ public final class BlackjackGame implements CasinoGame {
             Map.entry(10, Material.DIAMOND_BLOCK),
             Map.entry(11, Material.NETHERITE_BLOCK)
     );
+    private static final Map<Integer, Integer> CARD_COUNT = Map.ofEntries(
+            Map.entry(2, 4),
+            Map.entry(3, 4),
+            Map.entry(4, 4),
+            Map.entry(5, 4),
+            Map.entry(6, 4),
+            Map.entry(7, 4),
+            Map.entry(8, 4),
+            Map.entry(9, 4),
+            Map.entry(10, 16),
+            Map.entry(11, 4)
+    );
 
     public BlackjackGame(PluginContext context) {
         this.context = context;
@@ -51,12 +63,12 @@ public final class BlackjackGame implements CasinoGame {
             return;
         }
 
-        BlackjackSession session = new BlackjackSession();
+        BlackjackSession session = new BlackjackSession(generateDeck());
         // Initial deal
-        session.playerHand.add(drawCard());
-        session.playerHand.add(drawCard());
-        session.dealerHand.add(drawCard());
-        session.dealerHand.add(drawCard());
+        session.playerHand.add(drawCard(session));
+        session.playerHand.add(drawCard(session));
+        session.dealerHand.add(drawCard(session));
+        session.dealerHand.add(drawCard(session));
 
         sessions.put(player.getUniqueId(), session);
 
@@ -89,8 +101,22 @@ public final class BlackjackGame implements CasinoGame {
         return Component.text("Blackjack", NamedTextColor.GOLD, TextDecoration.BOLD);
     }
 
-    private int drawCard() {
-        return random.nextInt(2, 12); // 2 to 11
+    private List<Integer> generateDeck() {
+        List<Integer> deck = new ArrayList<>();
+        CARD_COUNT.forEach((value, count) -> {
+            for (int i = 0; i < count; i++) {
+                deck.add(value);
+            }
+        });
+        Collections.shuffle(deck);
+        return deck;
+    }
+
+    private int drawCard(BlackjackSession session) {
+        if (session.deck.isEmpty()) {
+            session.deck.addAll(generateDeck());
+        }
+        return session.deck.remove(0);
     }
 
     private void openGameGui(Player player, BlackjackSession session) {
@@ -99,23 +125,10 @@ public final class BlackjackGame implements CasinoGame {
                 .size(6);
 
         // Dealer's Hand (Row 1: Slots 0-8)
-        int dealerRowStart = 0;
-        if (session.isGameOver) {
-            for (int i = 0; i < session.dealerHand.size(); i++) {
-                int slot = getSymmetricalSlot(dealerRowStart, i, session.dealerHand.size());
-                builder.item(slot, new GuiItem(createCardItem(session.dealerHand.get(i)), null));
-            }
-        } else {
-            builder.item(3, new GuiItem(createCardItem(session.dealerHand.get(0)), null));
-            builder.item(5, new GuiItem(createItem(Material.GRAY_STAINED_GLASS, Component.text("Hidden Card", NamedTextColor.GRAY)), null));
-        }
+        renderHand(builder, session.dealerHand, 0, !session.isGameOver);
 
-        // Player's Hand (Row 3: Slots 18-26)
-        int playerRowStart = 18;
-        for (int i = 0; i < session.playerHand.size(); i++) {
-            int slot = getSymmetricalSlot(playerRowStart, i, session.playerHand.size());
-            builder.item(slot, new GuiItem(createCardItem(session.playerHand.get(i)), null));
-        }
+        // Player's Hand (Row 3: Slots 18-26, Row 4: 27-35)
+        renderHand(builder, session.playerHand, 18, false);
 
         // Controls (Row 5)
         if (!session.isGameOver) {
@@ -151,7 +164,7 @@ public final class BlackjackGame implements CasinoGame {
 
             meta.addPages(
                     Component.text("Welcome to the Casino's Blackjack Game!\n\nBlackjack is a game of skill and luck where you compete against the Dealer.\n\nThe goal is to have a hand value closer to 21 than the dealer, without going over (Busting)."),
-                    Component.text("The Basics\n- Entry Fee: 1 Gold Ingot\n\nControls:\n- HIT (Lime Wool): Take a card.\n- STAND (Red Wool): End turn.\n\nOne dealer card stays hidden until you Stand."),
+                    Component.text("The Basics\n- Entry Fee: 1 Gold Ingot\n- Deck: 52 standard cards\n\nControls:\n- HIT (Lime Wool): Take a card.\n- STAND (Red Wool): End turn.\n\nOne dealer card stays hidden until you Stand."),
                     Component.text("Card Values:\n2: Coal Block\n3: Copper Block\n4: Iron Block\n5: Lapis Block\n6: Redstone Block\n7: Quartz Block\n8: Gold Block\n9: Emerald Block\n10: Diamond Block\nAce: Netherite Block"),
                     Component.text("\nThe Ace:\nThe Ace is special. It counts as 11 unless your card total would make you bust (hand value higher than 21), in which case it counts as 1."),
                     Component.text("Dealer Rules:\nThe Dealer must keep hitting until their total is 17 or higher.\n\nIf the Dealer busts, you win!\n\nIf the Dealer's starting hand has a value of 21, the game is a Push (Tie)."),
@@ -161,14 +174,41 @@ public final class BlackjackGame implements CasinoGame {
         }
         return book;
     }
+    private void renderHand(GuiBuilder builder, List<Integer> hand, int rowStart, boolean hideSecondCard) {
+        for (int i = 0; i < hand.size(); i++) {
+            int rowOffset = (i / 9) * 9;
+            int currentRowStart = rowStart + rowOffset;
+            int indexInRow = i % 9;
+            int startOfThisRow = (i / 9) * 9;
+            int totalInThisRow = Math.min(9, hand.size() - startOfThisRow);
 
-    private int getSymmetricalSlot(int rowStart, int index, int total) {
-        int center = rowStart + 4;
-        return center - (total - 1) + (index * 2);
+            int slot = getHandSlot(currentRowStart, totalInThisRow, indexInRow);
+            if (hideSecondCard && i == 1) {
+                builder.item(slot, new GuiItem(createItem(Material.GRAY_STAINED_GLASS, Component.text("Hidden Card", NamedTextColor.GRAY)), null));
+                break;
+            }
+            builder.item(slot, new GuiItem(createCardItem(hand.get(i)), null));
+        }
+    }
+
+    private int getHandSlot(int rowStart, int totalInRow, int indexInRow) {
+        int[][] patterns = {
+                {},
+                {4},
+                {3, 5},
+                {2, 4, 6},
+                {1, 3, 5, 7},
+                {0, 2, 4, 6, 8},
+                {0, 1, 3, 5, 7, 8},
+                {0, 1, 3, 4, 5, 7, 8},
+                {0, 1, 2, 3, 5, 6, 7, 8},
+                {0, 1, 2, 3, 4, 5, 6, 7, 8}
+        };
+        return rowStart + patterns[totalInRow][indexInRow];
     }
 
     private void handleHit(Player player, BlackjackSession session) {
-        session.playerHand.add(drawCard());
+        session.playerHand.add(drawCard(session));
         if (calculateTotal(session.playerHand) > MAX_HAND_VALUE) {
             endGame(player, session, "Bust! You lose.");
         } else {
@@ -178,7 +218,7 @@ public final class BlackjackGame implements CasinoGame {
 
     private void handleStand(Player player, BlackjackSession session) {
         while (calculateTotal(session.dealerHand) < DEALER_THRESHOLD) {
-            session.dealerHand.add(drawCard());
+            session.dealerHand.add(drawCard(session));
         }
 
         int playerTotal = calculateTotal(session.playerHand);
@@ -239,8 +279,13 @@ public final class BlackjackGame implements CasinoGame {
     }
 
     private static class BlackjackSession {
+        final List<Integer> deck;
         final List<Integer> playerHand = new ArrayList<>();
         final List<Integer> dealerHand = new ArrayList<>();
         boolean isGameOver = false;
+
+        BlackjackSession(List<Integer> deck) {
+            this.deck = deck;
+        }
     }
 }
