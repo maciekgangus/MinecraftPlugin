@@ -15,7 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
@@ -26,21 +26,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public final class CasinoBridge extends JavaPlugin implements Listener {
+public final class CasinoBridge implements Listener {
+
+    private final Plugin plugin;
 
     private final String triggerFileName = "spin.txt";
     private final String resultFileName = "result.txt";
     private final Material[] symbols = {Material.DIAMOND, Material.GOLD_INGOT, Material.IRON_INGOT, Material.DIRT};
     private boolean isSpinning = false;
 
-    // Waluta i koszt gry
     private final Material currencyType = Material.GOLD_NUGGET;
     private final int costPerSpin = 1;
 
-    @Override
-    public void onEnable() {
-        getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("Most Kasyna v2 (Zabezpieczony) aktywowany!");
+    public CasinoBridge(Plugin plugin) {
+        this.plugin = plugin;
+        plugin.getLogger().info("Most Kasyna v2 (Zabezpieczony) zostal podpiety do glownego projektu!");
     }
 
     @EventHandler
@@ -50,9 +50,7 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
 
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && block != null) {
 
-            // ==========================================
-            // 1. ZABEZPIECZENIE PRZED KRADZIEŻĄ
-            // ==========================================
+            // ZABEZPIECZENIE
             if (block.getType() == Material.DROPPER) {
                 if (isCasinoDropper(block)) {
 
@@ -60,11 +58,8 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
                         BlockState state = block.getState();
                         if (state instanceof Dropper) {
                             Dropper dropper = (Dropper) state;
-
                             player.openInventory(dropper.getInventory());
-
                             player.sendMessage(ChatColor.GREEN + "🔓 Tryb Admina: Otwierasz skarbiec kasyna.");
-
                             event.setCancelled(true);
                             return;
                         }
@@ -77,9 +72,7 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
                 }
             }
 
-            // ==========================================
-            // 2. LOGIKA GRY (KLIKNIĘCIE PRZYCISKU)
-            // ==========================================
+            // LOGIKA GRY
             if (block.getType() == Material.STONE_BUTTON) {
 
                 if (isSpinning) return;
@@ -152,7 +145,7 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
 
     private void startCasinoGame(Player player, List<ItemFrame> frames, Dropper dropper) {
         isSpinning = true;
-        File triggerFile = new File(getDataFolder().getParentFile().getParentFile(), triggerFileName);
+        File triggerFile = new File(plugin.getDataFolder().getParentFile().getParentFile(), triggerFileName);
 
         try {
             triggerFile.createNewFile();
@@ -170,7 +163,7 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
                     }
 
                     if (tick % 10 == 0) {
-                        File resultFile = new File(getDataFolder().getParentFile().getParentFile(), resultFileName);
+                        File resultFile = new File(plugin.getDataFolder().getParentFile().getParentFile(), resultFileName);
                         if (resultFile.exists()) {
                             stopAnimationAndShowResult(player, frames, resultFile, dropper);
                             this.cancel();
@@ -182,7 +175,7 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
                         this.cancel();
                     }
                 }
-            }.runTaskTimer(this, 0L, 3L);
+            }.runTaskTimer(plugin, 0L, 3L);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -197,7 +190,7 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
 
             for (int i = 0; i < 3; i++) {
                 final int index = i;
-                Bukkit.getScheduler().runTaskLater(this, () -> {
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     Material resultMat = Material.valueOf(parts[index]);
                     frames.get(index).setItem(new ItemStack(resultMat));
                     player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1.2f);
@@ -238,6 +231,6 @@ public final class CasinoBridge extends JavaPlugin implements Listener {
                 dropper.drop();
                 count++;
             }
-        }.runTaskTimer(this, 0L, 5L);
+        }.runTaskTimer(plugin, 0L, 5L); 
     }
 }
