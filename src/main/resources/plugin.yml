@@ -1,16 +1,4 @@
-name: CasinoPlugin
-version: '${version}'
-main: dev.casino.CasinoPlugin
+name: CasinoBridge
+version: '1.0-SNAPSHOT'
+main: pl.patryk.casinobridge.CasinoBridge
 api-version: '1.21'
-description: Minecraft Casino Plugin Template
-authors:
-  - Team
-commands:
-  casino:
-    description: Opens the main casino menu
-    usage: /casino
-    permission: casino.use
-permissions:
-  casino.use:
-    description: Allows access to the casino
-    default: true
