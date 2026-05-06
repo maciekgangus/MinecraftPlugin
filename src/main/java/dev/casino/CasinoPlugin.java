@@ -39,6 +39,7 @@ public final class CasinoPlugin extends JavaPlugin {
         var pm = getServer().getPluginManager();
         pm.registerEvents(new GuiClickListener(guiManager), this);
         pm.registerEvents(new PlayerQuitListener(guiManager), this);
+        pm.registerEvents(new CasinoBridge(this), this);
 
         getLogger().info("CasinoPlugin enabled — " + games.getAll().size() + " game(s) registered.");
     }
