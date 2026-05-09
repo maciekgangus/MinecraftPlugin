@@ -92,8 +92,8 @@ class HorseRacingGameTest {
         assertNotNull(diamond);
         assertNotNull(diamond.getItemMeta());
         assertNotNull(diamond.getItemMeta().lore());
-        assertEquals("Cost: 1 gold", PLAIN.serialize(diamond.getItemMeta().lore().get(0)));
-        assertEquals("Payout: 5 gold", PLAIN.serialize(diamond.getItemMeta().lore().get(1)));
+        assertEquals("Cost: 3 gold", PLAIN.serialize(diamond.getItemMeta().lore().get(0)));
+        assertEquals("Payout: 7 gold", PLAIN.serialize(diamond.getItemMeta().lore().get(1)));
 
         assertNotNull(gold);
         assertNotNull(gold.getItemMeta());
@@ -104,8 +104,8 @@ class HorseRacingGameTest {
         assertNotNull(iron);
         assertNotNull(iron.getItemMeta());
         assertNotNull(iron.getItemMeta().lore());
-        assertEquals("Cost: 3 gold", PLAIN.serialize(iron.getItemMeta().lore().get(0)));
-        assertEquals("Payout: 7 gold", PLAIN.serialize(iron.getItemMeta().lore().get(1)));
+        assertEquals("Cost: 1 gold", PLAIN.serialize(iron.getItemMeta().lore().get(0)));
+        assertEquals("Payout: 5 gold", PLAIN.serialize(iron.getItemMeta().lore().get(1)));
     }
 
     @Test
@@ -113,7 +113,7 @@ class HorseRacingGameTest {
         game.start(player);
         assertEquals(0, economy.getBalance(player));
 
-        clickSlot(11);
+        clickSlot(15);
 
         assertEquals(0, economy.getBalance(player));
     }
@@ -134,10 +134,18 @@ class HorseRacingGameTest {
         player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
         game.start(player);
 
-        clickSlot(11);
+        clickSlot(15);
 
         Inventory top = player.getOpenInventory().getTopInventory();
-        assertEquals(Material.DIAMOND_HORSE_ARMOR, top.getItem(0).getType());
+        boolean ironIsOnTrack = false;
+        for (int slot = 18; slot <= 26; slot++) {
+            ItemStack item = top.getItem(slot);
+            if (item != null && item.getType() == Material.IRON_HORSE_ARMOR) {
+                ironIsOnTrack = true;
+                break;
+            }
+        }
+        assertTrue(ironIsOnTrack);
         assertEquals(0, economy.getBalance(player));
     }
 
@@ -146,7 +154,7 @@ class HorseRacingGameTest {
         player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
         game.start(player);
 
-        clickSlot(15);
+        clickSlot(11);
 
         Inventory top = player.getOpenInventory().getTopInventory();
         assertEquals(Material.DIAMOND_HORSE_ARMOR, top.getItem(11).getType());

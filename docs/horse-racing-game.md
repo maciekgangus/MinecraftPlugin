@@ -18,9 +18,9 @@ Players pick one horse, pay a gold cost, watch a short race animation, and recei
 
 The game currently has three horses with different risk profiles:
 
-- `Diamond Flash`: cost `1` gold, payout `5` gold, move chance per tick `35%`
+- `Diamond Flash`: cost `3` gold, payout `7` gold, move chance per tick `75%`
 - `Golden Horseshoe`: cost `2` gold, payout `6` gold, move chance per tick `55%`
-- `Iron Hoof`: cost `3` gold, payout `7` gold, move chance per tick `75%`
+- `Iron Hoof`: cost `1` gold, payout `5` gold, move chance per tick `35%`
 
 Higher cost horses are configured with higher chance to advance each race tick.
 

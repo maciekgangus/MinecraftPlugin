@@ -23,9 +23,9 @@ public final class HorseRacingGame implements CasinoGame {
         1,
         "Diamond Flash",
         Material.DIAMOND_HORSE_ARMOR,
-        1,
-        5,
-        0.35
+        3,
+        7,
+        0.75
     );
     private static final BetOption GOLDEN_HORSESHOE = new BetOption(
         2,
@@ -39,9 +39,9 @@ public final class HorseRacingGame implements CasinoGame {
         3,
         "Iron Hoof",
         Material.IRON_HORSE_ARMOR,
-        3,
-        7,
-        0.75
+        1,
+        5,
+        0.35
     );
 
     private final PluginContext context;
