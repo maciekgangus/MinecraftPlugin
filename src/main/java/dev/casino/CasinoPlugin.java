@@ -25,10 +25,9 @@ public final class CasinoPlugin extends JavaPlugin {
         var games    = new DefaultGameRegistry();
         guiManager   = new DefaultGuiManager();
 
-        var context  = new PluginContext(this, economy, games, guiManager);
-        GameRegistrar.register(context);
-
         var mainMenu = new MainCasinoMenu(games);
+        var context  = new PluginContext(this, economy, games, guiManager, mainMenu);
+        GameRegistrar.register(context);
 
         // Register command
         var casinoCommand = new CasinoCommand(guiManager, mainMenu);

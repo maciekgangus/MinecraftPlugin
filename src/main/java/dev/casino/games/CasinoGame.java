@@ -8,6 +8,8 @@ import org.bukkit.inventory.ItemStack;
  * Contract for every casino game.
  *
  * <p>Implement this interface and register in {@link GameRegistrar} to add a new game.
+ * From any game GUI, use {@link dev.casino.core.PluginContext#openMainCasinoMenu(org.bukkit.entity.Player)}
+ * so the player can return to the list of all games.
  * {@link #stop(Player)} must be idempotent: calling it when no session is active is safe.
  *
  * <p>{@code stop(Player)} is triggered by:
