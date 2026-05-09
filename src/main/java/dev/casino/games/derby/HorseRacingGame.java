@@ -14,9 +14,35 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.inventory.Inventory;
 
+import java.util.List;
 import java.util.Random;
 
 public final class HorseRacingGame implements CasinoGame {
+
+    private static final BetOption DIAMOND_FLASH = new BetOption(
+        1,
+        "Diamond Flash",
+        Material.DIAMOND_HORSE_ARMOR,
+        1,
+        5,
+        0.35
+    );
+    private static final BetOption GOLDEN_HORSESHOE = new BetOption(
+        2,
+        "Golden Horseshoe",
+        Material.GOLDEN_HORSE_ARMOR,
+        2,
+        6,
+        0.55
+    );
+    private static final BetOption IRON_HOOF = new BetOption(
+        3,
+        "Iron Hoof",
+        Material.IRON_HORSE_ARMOR,
+        3,
+        7,
+        0.75
+    );
 
     private final PluginContext context;
     private final Random random = new Random();
@@ -34,14 +60,14 @@ public final class HorseRacingGame implements CasinoGame {
             back.setItemMeta(backMeta);
         }
         return new GuiBuilder()
-            .title(Component.text("Pick a winner! (Cost: 1 ingot)"))
+            .title(Component.text("Pick a winner"))
             .size(3)
-            .item(11, new GuiItem(new ItemStack(Material.DIAMOND_HORSE_ARMOR),
-                e -> placeBet(player, eco, 1)))
-            .item(13, new GuiItem(new ItemStack(Material.GOLDEN_HORSE_ARMOR),
-                e -> placeBet(player, eco, 2)))
-            .item(15, new GuiItem(new ItemStack(Material.IRON_HORSE_ARMOR),
-                e -> placeBet(player, eco, 3)))
+            .item(11, new GuiItem(createHorseBetIcon(DIAMOND_FLASH),
+                e -> placeBet(player, eco, DIAMOND_FLASH)))
+            .item(13, new GuiItem(createHorseBetIcon(GOLDEN_HORSESHOE),
+                e -> placeBet(player, eco, GOLDEN_HORSESHOE)))
+            .item(15, new GuiItem(createHorseBetIcon(IRON_HOOF),
+                e -> placeBet(player, eco, IRON_HOOF)))
             .item(22, new GuiItem(back, e -> context.openMainCasinoMenu(player)))
             .build();
     }
@@ -51,13 +77,34 @@ public final class HorseRacingGame implements CasinoGame {
         context.gui().open(player, buildBettingMenu(player));
     }
 
-    private void placeBet(Player player, EconomyManager eco, int horseNumber) {
-        if (!eco.hasFunds(player, 1)) {
-            player.sendMessage(Component.text("You don't have enough gold!"));
+    private ItemStack createHorseBetIcon(BetOption option) {
+        ItemStack icon = new ItemStack(option.icon());
+        ItemMeta meta = icon.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text(option.name()));
+            meta.lore(List.of(
+                Component.text("Cost: " + option.cost() + " gold"),
+                Component.text("Payout: " + option.payout() + " gold"),
+                Component.text("Win chance: " + toPercent(option.moveChance()) + "%")
+            ));
+            icon.setItemMeta(meta);
+        }
+        return icon;
+    }
+
+    private int toPercent(double chance) {
+        return (int) Math.round(chance * 100);
+    }
+
+    private void placeBet(Player player, EconomyManager eco, BetOption selectedHorse) {
+        if (!eco.hasFunds(player, selectedHorse.cost())) {
+            player.sendMessage(Component.text("You don't have enough gold for this horse!"));
             return;
         }
-        eco.withdraw(player, 1);
-        player.sendMessage(Component.text("The race begins!"));
+        eco.withdraw(player, selectedHorse.cost());
+        player.sendMessage(Component.text(
+            "The race begins! You bet on " + selectedHorse.name() + "."
+        ));
         Inventory inv = player.getOpenInventory().getTopInventory();
         inv.clear();
 
@@ -77,10 +124,14 @@ public final class HorseRacingGame implements CasinoGame {
                 inv.setItem(positions[1] + 9, null);
                 inv.setItem(positions[2] + 18, null);
 
-                for (int i = 0; i < 3; i++) {
-                    if (random.nextBoolean()) {
-                        positions[i]++;
-                    }
+                if (random.nextDouble() < DIAMOND_FLASH.moveChance()) {
+                    positions[0]++;
+                }
+                if (random.nextDouble() < GOLDEN_HORSESHOE.moveChance()) {
+                    positions[1]++;
+                }
+                if (random.nextDouble() < IRON_HOOF.moveChance()) {
+                    positions[2]++;
                 }
 
                 inv.setItem(positions[0], horse1);
@@ -98,9 +149,11 @@ public final class HorseRacingGame implements CasinoGame {
 
                 if (winner != 0) {
                     cancel();
-                    if (winner == horseNumber) {
-                        player.sendMessage(Component.text("Your horse won! You receive 3 gold."));
-                        eco.deposit(player, 3);
+                    if (winner == selectedHorse.number()) {
+                        player.sendMessage(Component.text(
+                            "Your horse won! You receive " + selectedHorse.payout() + " gold."
+                        ));
+                        eco.deposit(player, selectedHorse.payout());
                     } else {
                         player.sendMessage(Component.text("Horse #" + winner + " won. Better luck next time."));
                     }
@@ -134,4 +187,13 @@ public final class HorseRacingGame implements CasinoGame {
     public Component getDisplayName() {
         return Component.text("Virtual Derby");
     }
+
+    private record BetOption(
+        int number,
+        String name,
+        Material icon,
+        int cost,
+        int payout,
+        double moveChance
+    ) {}
 }

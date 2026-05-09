@@ -82,6 +82,33 @@ class HorseRacingGameTest {
     }
 
     @Test
+    void horseIconsExposeDifferentCostsAndPayouts() {
+        game.start(player);
+
+        ItemStack diamond = player.getOpenInventory().getTopInventory().getItem(11);
+        ItemStack gold = player.getOpenInventory().getTopInventory().getItem(13);
+        ItemStack iron = player.getOpenInventory().getTopInventory().getItem(15);
+
+        assertNotNull(diamond);
+        assertNotNull(diamond.getItemMeta());
+        assertNotNull(diamond.getItemMeta().lore());
+        assertEquals("Cost: 1 gold", PLAIN.serialize(diamond.getItemMeta().lore().get(0)));
+        assertEquals("Payout: 5 gold", PLAIN.serialize(diamond.getItemMeta().lore().get(1)));
+
+        assertNotNull(gold);
+        assertNotNull(gold.getItemMeta());
+        assertNotNull(gold.getItemMeta().lore());
+        assertEquals("Cost: 2 gold", PLAIN.serialize(gold.getItemMeta().lore().get(0)));
+        assertEquals("Payout: 6 gold", PLAIN.serialize(gold.getItemMeta().lore().get(1)));
+
+        assertNotNull(iron);
+        assertNotNull(iron.getItemMeta());
+        assertNotNull(iron.getItemMeta().lore());
+        assertEquals("Cost: 3 gold", PLAIN.serialize(iron.getItemMeta().lore().get(0)));
+        assertEquals("Payout: 7 gold", PLAIN.serialize(iron.getItemMeta().lore().get(1)));
+    }
+
+    @Test
     void betWithoutGoldDoesNotChangeBalance() {
         game.start(player);
         assertEquals(0, economy.getBalance(player));
@@ -107,11 +134,23 @@ class HorseRacingGameTest {
         player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
         game.start(player);
 
-        clickSlot(13);
+        clickSlot(11);
 
         Inventory top = player.getOpenInventory().getTopInventory();
-        assertEquals(Material.GOLDEN_HORSE_ARMOR, top.getItem(9).getType());
+        assertEquals(Material.DIAMOND_HORSE_ARMOR, top.getItem(0).getType());
         assertEquals(0, economy.getBalance(player));
+    }
+
+    @Test
+    void expensiveHorseRequiresEnoughGold() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
+        game.start(player);
+
+        clickSlot(15);
+
+        Inventory top = player.getOpenInventory().getTopInventory();
+        assertEquals(Material.DIAMOND_HORSE_ARMOR, top.getItem(11).getType());
+        assertEquals(1, economy.getBalance(player));
     }
 
     @Test
