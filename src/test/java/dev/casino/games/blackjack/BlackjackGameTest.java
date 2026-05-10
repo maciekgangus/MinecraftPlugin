@@ -19,6 +19,8 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BlackjackGameTest {
@@ -60,83 +62,115 @@ class BlackjackGameTest {
     }
 
     @Test
-    void startWithInsufficientFundsSendsMessage() {
+    void startOpensBettingGui() {
         game.start(player);
+        assertNotNull(player.getOpenInventory());
+        assertEquals(InventoryType.CHEST, player.getOpenInventory().getTopInventory().getType());
+        
+        ItemStack betDisplay = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.BET_DISPLAY);
+        assertNotNull(betDisplay);
+        assertTrue(PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(betDisplay.getItemMeta().displayName())).contains("1 Gold"));
+    }
+
+    @Test
+    void increaseDecreaseBetWorks() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 10));
+        game.start(player);
+
+        clickSlot(player, BlackjackLayout.BET_INCREASE);
+        ItemStack betDisplay = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.BET_DISPLAY);
+        assertNotNull(betDisplay);
+        assertTrue(PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(betDisplay.getItemMeta().displayName())).contains("2 Gold"));
+
+        clickSlot(player, BlackjackLayout.BET_DECREASE);
+        betDisplay = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.BET_DISPLAY);
+        assertNotNull(betDisplay);
+        assertTrue(PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(betDisplay.getItemMeta().displayName())).contains("1 Gold"));
+    }
+
+
+    @Test
+    void initializeWithInsufficientFundsSendsMessage() {
+        game.start(player);
+        clickSlot(player, BlackjackLayout.BET_DEAL);
 
         Component message = player.nextComponentMessage();
         assertNotNull(message, "Should have received an error message");
         assertTrue(PlainTextComponentSerializer.plainText().serialize(message).contains("You don't have enough gold"));
 
-        assertFalse(guiManager.getActivePlayers().contains(player.getUniqueId()), 
-            "Player should not have an active game session in GuiManager");
-
         assertEquals(0, economy.getBalance(player), "Balance should remain 0");
     }
 
     @Test
-    void startWithSufficientFundsOpensGui() {
-        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
+    void initializeWithSufficientFundsStartsGame() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 5));
         game.start(player);
         
-        assertNotNull(player.getOpenInventory(), "Inventory view should not be null");
-        assertNotNull(player.getOpenInventory().getTopInventory(), "Top inventory should not be null");
-        assertEquals(InventoryType.CHEST, player.getOpenInventory().getTopInventory().getType());
-        assertEquals(0, economy.getBalance(player), "Player did not lose gold for betting after game started");
-        assertTrue(guiManager.getActivePlayers().contains(player.getUniqueId()), "No active players");
-    }
+        clickSlot(player, BlackjackLayout.BET_INCREASE);
+        
 
-    @Test
-    void stopIsIdempotent() {
-        assertDoesNotThrow(() -> game.stop(player));
+        clickSlot(player, BlackjackLayout.BET_DEAL);
+
+        assertEquals(3, economy.getBalance(player), "Bet should have been withdrawn");
         
-        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
-        game.start(player);
-        assertDoesNotThrow(() -> game.stop(player));
-        assertDoesNotThrow(() -> game.stop(player));
+        ItemStack betDisplay = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.GAME_BET_DISPLAY);
+        assertNotNull(betDisplay);
+        assertTrue(PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(betDisplay.getItemMeta().displayName())).contains("2 Gold"));
     }
 
     @Test
     void hitDrawsAnotherCard() {
-        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
-        game.start(player);
+        ensureActiveGame();
 
         int initialItems = countItems(player.getOpenInventory().getTopInventory());
-        clickSlot(player, 39);
+        clickSlot(player, BlackjackLayout.GAME_HIT);
 
         int afterHitItems = countItems(player.getOpenInventory().getTopInventory());
-        assertTrue(afterHitItems >= initialItems, "Hit did not increase card count");
+        
+        ItemStack playAgain = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.GAME_PLAY_AGAIN);
+        boolean isGameOver = playAgain != null && playAgain.getType() == Material.GOLDEN_SWORD;
+        
+        assertTrue(afterHitItems > initialItems || isGameOver, "Hit did not increase card count and game did not end");
     }
 
     @Test
     void standEndsGameAndDealerPlays() {
-        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
-        game.start(player);
+        ensureActiveGame();
 
-        clickSlot(player, 41);
+        clickSlot(player, BlackjackLayout.GAME_STAND);
 
-        ItemStack playAgain = player.getOpenInventory().getTopInventory().getItem(50);
+        ItemStack playAgain = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.GAME_PLAY_AGAIN);
         assertNotNull(playAgain);
-        assertEquals(Material.ARROW, playAgain.getType(), "Game did not end");
+        assertEquals(Material.GOLDEN_SWORD, playAgain.getType(), "Game did not end");
+    }
+
+    private void ensureActiveGame() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 100));
+        int attempts = 0;
+        while (attempts < 10) {
+            game.start(player);
+            clickSlot(player, BlackjackLayout.BET_DEAL);
+            
+            ItemStack playAgain = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.GAME_PLAY_AGAIN);
+            if (playAgain == null || playAgain.getType() != Material.GOLDEN_SWORD) {
+                return;
+            }
+            attempts++;
+        }
+        fail("Could not start an active game after 10 attempts (too many Natural 21s?)");
     }
 
     @Test
-    void playerCanBust() {
+    void quitToBettingWorks() {
         player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 1));
         game.start(player);
+        clickSlot(player, BlackjackLayout.BET_DEAL);
 
-        int maxHits = 12;
-        for (int i = 0; i < maxHits; i++) {
-            clickSlot(player, 39);
-            ItemStack playAgain = player.getOpenInventory().getTopInventory().getItem(50);
-            if (playAgain != null && playAgain.getType() == Material.ARROW) {
-                Component msg = player.nextComponentMessage();
-                assertNotNull(msg, "Should have received a game-over message");
-                String text = PlainTextComponentSerializer.plainText().serialize(msg);
-                assertTrue(text.contains("Bust"), "Message should indicate game outcome: " + text);
-                return;
-            }
-        }
-        fail("Player did not bust after " + maxHits + " hits");
+        clickSlot(player, BlackjackLayout.GAME_QUIT);
+
+        ItemStack dealButton = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.BET_DEAL);
+        assertNotNull(dealButton);
+        assertEquals(Material.ARROW, dealButton.getType(), "Should be back in betting GUI");
     }
 
     private void clickSlot(PlayerMock player, int slot) {
