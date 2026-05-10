@@ -4,6 +4,7 @@ import dev.casino.core.PluginContext;
 import dev.casino.economy.GoldEconomyManager;
 import dev.casino.games.DefaultGameRegistry;
 import dev.casino.gui.DefaultGuiManager;
+import dev.casino.gui.GuiMenu;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
@@ -29,6 +30,7 @@ class BlackjackGameTest {
     private DefaultGuiManager guiManager;
     private BlackjackGame game;
     private PlayerMock player;
+    private GuiMenu guiMenu;
 
     @BeforeEach
     void setUp() {
@@ -36,7 +38,7 @@ class BlackjackGameTest {
         var plugin = MockBukkit.createMockPlugin();
         economy = new GoldEconomyManager();
         guiManager = new DefaultGuiManager();
-        PluginContext context = new PluginContext(plugin, economy, new DefaultGameRegistry(), guiManager);
+        PluginContext context = new PluginContext(plugin, economy, new DefaultGameRegistry(), guiManager, guiMenu);
         game = new BlackjackGame(context);
         player = server.addPlayer();
     }

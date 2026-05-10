@@ -2,6 +2,7 @@ package dev.casino.games;
 
 import dev.casino.core.PluginContext;
 import dev.casino.games.derby.HorseRacingGame;
+import dev.casino.games.blackjack.BlackjackGame;
 
 /**
  * Single point of truth for game registration.
