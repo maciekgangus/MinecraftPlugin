@@ -1,85 +1,53 @@
-# Automat do Gier (Slot Machine)
+# Slot Machine Game Documentation
 
-Rozszerzenie do głównego pluginu kasyna (`CasinoPlugin`), wprowadzające w pełni funkcjonalny, animowany automat do gier. Moduł ten opiera się na architekturze rozproszonej – interfejs obsługiwany jest przez serwer Minecraft (Java), natomiast główna logika biznesowa i generator liczb losowych działają jako zewnętrzny skrypt w Pythonie.
+## Overview
 
-## Główne funkcje
-* **Wizualna animacja bębnów:** Kręcące się symbole w ramkach na przedmioty. Zatrzymywanie odbywa się sekwencyjnie (od lewej do prawej).
-* **Zewnętrzny Backend (Python):** Decyzja o wygranej zapada poza silnikiem Minecrafta - pozwala to na łatwą rozbudowę o dodatkowe funkcje, uczenie maszynowe czy bazę danych bez obciążania serwera gry.
-* **Zintegrowana Ekonomia:** Automat automatycznie pobiera opłatę za grę (Złote Samorodki) i fizycznie podaje nagrodę z podajnika (Droppera).
-* **Zabezpieczenie przed kradzieżą (Anti-Theft):** Zwykli gracze nie mogą otworzyć podajnika z nagrodami. Skarbiec jest zablokowany przez plugin.
-* **Tryb Administratora (Bypass):** Operatorzy serwera (OP) mogą łatwo uzupełnić nagrody, klikając prawym przyciskiem myszy na podajnik, trzymając jednocześnie klawisz kucania (`Shift`).
+`SlotsGame` is a chest-GUI casino game registered in the main `/casino` menu.
+It features a distributed architecture: the Minecraft server (Java) handles the user interface and economy, while the core business logic, RNG (Random Number Generation), and outcome evaluation are processed by an external Python backend script.
 
----
+## Player Flow
 
-## Architektura 
+1. Run `/casino`.
+2. Click `Slot Machine`.
+3. **Spinning:** Click the `Lever` icon to pay the entry cost and start the machine.
+4. **Animation:** Watch the three reels (slots 11, 13, and 15) rapidly change symbols.
+5. **Resolution:** The reels stop sequentially. If all three symbols match, the player wins a jackpot.
+6. Click the `Barrier` icon to return to the root casino menu.
 
-Komunikacja między Javą a Pythonem odbywa się asynchronicznie za pomocą systemu monitorowania plików lokalnych:
-1. Gracz klika przycisk. Java pobiera opłatę i tworzy plik `spin.txt` w głównym katalogu serwera, po czym uruchamia pętlę animacji.
-2. Skrypt w Pythonie wykrywa plik `spin.txt`, usuwa go, przeprowadza losowanie i zapisuje wynik do pliku `result.txt`.
-3. Java cały czas nasłuchuje. Gdy wykryje plik `result.txt`, odczytuje go, zatrzymuje animację na wylosowanych symbolach i wydaje nagrodę.
+## Game Mechanics & Architecture
 
----
+- **The Interface:** The game runs in a 3-row, 9-column inventory. The reels are positioned in the center row.
+- **Asynchronous Python Bridge:** - When a player spins, Java creates a `spin.txt` file in the server's root directory.
+    - The Python script (`casino_backend.py`) continuously monitors the folder, detects the file, deletes it, calculates the outcome, and writes the result to `result.txt`.
+    - Java reads `result.txt`, applies the visual stopping animation, and processes the outcome.
+- **Concurrency Lock:** A global lock (`globalSpinLock`) is implemented to prevent players from triggering multiple spins at the exact same millisecond, ensuring the file-based communication remains stable.
 
-## Wymagania Techniczne
-* **Serwer:** Paper / Spigot w wersji **1.21.4**
-* **Java:** JDK 21
-* **Python:** Wersja 3.8 lub nowsza
-* Narzędzie `screen` na serwerze Linux - do działania backendu w tle.
+## Economy Integration
 
----
+- All costs and payouts use the shared `EconomyManager`.
+- **Cost:** `1` Gold Ingot (withdrawn immediately upon clicking the Lever, before the animation starts).
+- **Payout:** `5` Gold Ingots (deposited only if the `result.txt` yields a `WIN` outcome).
+- The machine automatically blocks spins if the player has insufficient funds.
 
-## Budowa automatu w grze
+## Deployment & Requirements
 
-Aby automat działał, musi zostać prawidłowo zbudowany w świecie gry. Kod dynamicznie wykrywa otoczenie - nie trzeba dzięki temu na sztywno wpisywać koordynatów.
+Because of the distributed architecture, this game requires the Python backend to be running on the host machine alongside the Minecraft server.
 
-**Instrukcja budowy:**
-1. Postaw ścianę z dowolnych bloków.
-2. Powieś obok siebie **3 Ramki na przedmioty** (Item Frames).
-3. Pod środkową ramką umieść **Kamienny Przycisk** (Stone Button).
-4. W promieniu 2 bloków od przycisku postaw **Podajnik** (Dropper) skierowany "twarzą" do gracza.
-5. Uzupełnij Dropper nagrodami (wymaga uprawnień OP + użycia Shift+Kliknięcia).
+1. **Python Script Placement:** Place `casino_backend.py` in the server's root directory (the same folder as `server.jar`).
+2. **Running the Backend:** Use a terminal multiplexer (like `screen` or `tmux`) to keep the script running in the background.
+    ```bash
+    # Create a background session
+    screen -S casino_python
+    
+    # Run the script
+    python3 casino_backend.py
+    
+    # Detach from the session (Leave it running): Ctrl + A, then D
+    ```
 
----
+## Main Classes & Files
 
-## Instrukcja Wdrożenia (Deployment)
-
-Zanim gracze będą mogli zagrać, należy wgrać i uruchomić oba komponenty na serwerze fizycznym.
-
-### 1. Kompilacja Pluginu (Java)
-Projekt jest zintegrowany z Gradle. W celu zbudowania paczki:
-1. Uruchom zadanie `shadowJar` (w IntelliJ: zakładka Gradle -> Tasks -> shadow -> shadowJar).
-2. Wygenerowany plik `.jar` (z folderu `build/libs`) przerzuć do folderu `plugins/` na serwerze Minecraft.
-
-### 2. Uruchomienie Backendu (Python)
-Plik `casino_backend.py` **musi** znajdować się w głównym katalogu serwera (tam, gdzie leży plik `server.jar`).
-
-Aby uruchomić skrypt tak, by działał po zamknięciu konsoli:
-```bash
-# 1. Przejdź do głównego folderu serwera
-cd /sciezka/do/serwera/minecraft/
-
-# 2. Utwórz nową wirtualną sesję za pomocą programu screen
-screen -S kasyno_python
-
-# 3. Uruchom skrypt
-python3 casino_backend.py
-
-# 4. Odepnij sesję (skrypt będzie działał w tle)
-# Wciśnij skrót klawiszowy: Ctrl + A, a następnie puść i wciśnij klawisz D.
-```
-
-## Konfiguracja 
-
-Zmiany waluty, kosztu gry lub nagrody można dokonać modyfikując zmienne na początku klasy CasinoBridge.java:
-```java
-// Koszt gry i waluta
-private final Material currencyType = Material.GOLD_NUGGET;
-private final int costPerSpin = 1;
-
-// Zestaw symboli, które losuje maszyna (muszą pokrywać się ze skryptem w Pythonie)
-private final Material[] symbols = {Material.DIAMOND, Material.GOLD_INGOT, Material.IRON_INGOT, Material.DIRT};
-```
-
-Po dodaniu nowych symboli do Javy trzeba je również dodać do listy SYMBOLS w pliku casino_backend.py.
-
-
+- **Game Implementation:** `src/main/java/dev/casino/games/slots/SlotsGame.java`
+- **Backend Logic:** `casino_backend.py` (Located in server root)
+- **Registration:** `src/main/java/dev/casino/games/GameRegistrar.java`
+- **Main menu return helper:** `PluginContext#openMainCasinoMenu(Player)`
