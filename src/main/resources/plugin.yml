@@ -10,7 +10,14 @@ commands:
     description: Opens the main casino menu
     usage: /casino
     permission: casino.use
+  leaderboard:
+    description: Displays the casino leaderboard
+    usage: /leaderboard
+    permission: leaderboard.view
 permissions:
   casino.use:
     description: Allows access to the casino
+    default: true
+  leaderboard.view:
+    description: Allows viewing the leaderboard
     default: true

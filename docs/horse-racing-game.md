@@ -38,6 +38,12 @@ Higher cost horses are configured with higher chance to advance each race tick.
 - Cost is withdrawn before race start.
 - Payout is deposited only when the selected horse wins.
 
+## Statistics & Persistence
+
+- **Tracking:** Every horse bet and win is automatically recorded.
+- **Persistence:** Stats are saved asynchronously to `stats.yml` immediately after the race finishes or a bet is placed.
+- **Leaderboard:** Use `/leaderboard` to see the top-performing derby players.
+
 ## Main Classes
 
 - Game implementation: `src/main/java/dev/casino/games/derby/HorseRacingGame.java`

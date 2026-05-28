@@ -1,7 +1,9 @@
 package dev.casino.games.blackjack;
 
 import dev.casino.core.PluginContext;
+import dev.casino.economy.CasinoBettingData;
 import dev.casino.economy.GoldEconomyManager;
+import dev.casino.economy.StatsManager;
 import dev.casino.games.DefaultGameRegistry;
 import dev.casino.gui.DefaultGuiManager;
 import dev.casino.gui.GuiMenu;
@@ -38,7 +40,9 @@ class BlackjackGameTest {
         var plugin = MockBukkit.createMockPlugin();
         economy = new GoldEconomyManager();
         guiManager = new DefaultGuiManager();
-        PluginContext context = new PluginContext(plugin, economy, new DefaultGameRegistry(), guiManager, guiMenu);
+        var betting = new CasinoBettingData();
+        var statsManager = new StatsManager(plugin, betting);
+        PluginContext context = new PluginContext(plugin, economy, betting, statsManager, new DefaultGameRegistry(), guiManager, guiMenu);
         game = new BlackjackGame(context);
         player = server.addPlayer();
     }
@@ -172,7 +176,7 @@ class BlackjackGameTest {
 
         ItemStack dealButton = player.getOpenInventory().getTopInventory().getItem(BlackjackLayout.BET_DEAL);
         assertNotNull(dealButton);
-        assertEquals(Material.ARROW, dealButton.getType(), "Should be back in betting GUI");
+        assertEquals(Material.GOLDEN_SWORD, dealButton.getType(), "Should be back in betting GUI");
     }
 
     private void clickSlot(PlayerMock player, int slot) {

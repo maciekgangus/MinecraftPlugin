@@ -1,7 +1,9 @@
 package dev.casino.games.blackjack;
 
+import lombok.Getter;
 import org.bukkit.Material;
 
+@Getter
 public enum Card {
     TWO(2, Material.COAL_BLOCK, "2"),
     THREE(3, Material.COPPER_BLOCK, "3"),
@@ -25,17 +27,5 @@ public enum Card {
         this.value = value;
         this.material = material;
         this.displayName = displayName;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public Material getMaterial() {
-        return material;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 }

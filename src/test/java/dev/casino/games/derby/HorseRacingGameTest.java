@@ -1,7 +1,9 @@
 package dev.casino.games.derby;
 
 import dev.casino.core.PluginContext;
+import dev.casino.economy.CasinoBettingData;
 import dev.casino.economy.GoldEconomyManager;
+import dev.casino.economy.StatsManager;
 import dev.casino.games.DefaultGameRegistry;
 import dev.casino.games.MainCasinoMenu;
 import dev.casino.gui.DefaultGuiManager;
@@ -43,7 +45,9 @@ class HorseRacingGameTest {
         guiManager = new DefaultGuiManager();
         var games  = new DefaultGameRegistry();
         mainMenu   = new MainCasinoMenu(games);
-        var context = new PluginContext(plugin, economy, games, guiManager, mainMenu);
+        var betting = new CasinoBettingData();
+        var statsManager = new StatsManager(plugin, betting);
+        var context = new PluginContext(plugin, economy, betting, statsManager, games, guiManager, mainMenu);
         game       = new HorseRacingGame(context);
         player     = server.addPlayer();
     }

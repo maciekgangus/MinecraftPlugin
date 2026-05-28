@@ -1,6 +1,7 @@
 package dev.casino.games.slots;
 
 import dev.casino.core.PluginContext;
+import dev.casino.economy.BettingData;
 import dev.casino.games.CasinoGame;
 import dev.casino.gui.GuiBuilder;
 import dev.casino.gui.GuiItem;
@@ -97,6 +98,8 @@ public final class SlotsGame implements CasinoGame {
 
         // Pobranie opłaty
         context.economy().withdraw(player, costPerSpin);
+        context.betting().getSlotsStats(player).addBet(costPerSpin);
+        context.statsManager().saveStatsAsync();
         globalSpinLock = true;
 
         File triggerFile = new File(context.plugin().getDataFolder().getParentFile().getParentFile(), triggerFileName);
@@ -175,6 +178,8 @@ public final class SlotsGame implements CasinoGame {
 
             // Wydanie nagrody
             context.economy().deposit(player, reward);
+            context.betting().getSlotsStats(player).addWon(reward);
+            context.statsManager().saveStatsAsync();
             player.sendMessage(Component.text("You won " + reward + " gold ingots!").color(NamedTextColor.GREEN));
         } else {
             player.playSound(player.getLocation(), Sound.BLOCK_CHEST_CLOSE, 1f, 0.5f);

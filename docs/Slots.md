@@ -29,6 +29,12 @@ It features a distributed architecture: the Minecraft server (Java) handles the 
 - **Payout:** `5` Gold Ingots (deposited only if the `result.txt` yields a `WIN` outcome).
 - The machine automatically blocks spins if the player has insufficient funds.
 
+## Statistics & Persistence
+
+- **Tracking:** Every slot spin and jackpot is automatically recorded.
+- **Persistence:** Stats are saved asynchronously to `stats.yml` immediately after each spin.
+- **Leaderboard:** Use `/leaderboard` to see who the Slot Machine champions are.
+
 ## Deployment & Requirements
 
 Because of the distributed architecture, this game requires the Python backend to be running on the host machine alongside the Minecraft server.
