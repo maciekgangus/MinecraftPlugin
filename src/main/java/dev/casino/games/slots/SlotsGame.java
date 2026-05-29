@@ -146,9 +146,7 @@ public final class SlotsGame implements CasinoGame {
                 }
                 // If player closed or switched inventory, refund and stop
                 if (player.getOpenInventory().getTopInventory() != session.openInventory) {
-                    context.economy().deposit(player, session.bet);
-                    session.spinning = false;
-                    sessions.remove(player.getUniqueId());
+                    stop(player);
                     cancel();
                     return;
                 }
@@ -181,7 +179,7 @@ public final class SlotsGame implements CasinoGame {
                     cancel();
                 }
             }
-        }.runTaskTimer(context.plugin(), 0L, 2L);
+        }.runTaskTimer(context.plugin(), 1L, 2L);
 
         session.animationTask = task;
     }
