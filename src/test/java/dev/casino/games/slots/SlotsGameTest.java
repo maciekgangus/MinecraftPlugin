@@ -85,7 +85,7 @@ class SlotsGameTest {
         assertNotNull(display);
         String text = PlainTextComponentSerializer.plainText().serialize(
                 Objects.requireNonNull(display.getItemMeta().displayName()));
-        assertTrue(text.contains("1"), "Bet display should show 1");
+        assertEquals("Bet: 1 Gold", text);
     }
 
     @Test void betIncreaseWithSufficientFundsWorks() {
@@ -94,7 +94,7 @@ class SlotsGameTest {
         clickSlot(SlotsLayout.BET_INCREASE);
 
         String text = betDisplayText();
-        assertTrue(text.contains("2"), "Bet should increase to 2");
+        assertEquals("Bet: 2 Gold", text);
     }
 
     @Test void betIncreaseBeyondBalanceIsIgnored() {
@@ -102,7 +102,7 @@ class SlotsGameTest {
         clickSlot(SlotsLayout.BET_INCREASE);
 
         String text = betDisplayText();
-        assertTrue(text.contains("1"), "Bet should not increase past balance");
+        assertEquals("Bet: 1 Gold", text);
     }
 
     @Test void betDecreaseAtMinimumIsIgnored() {
@@ -110,7 +110,7 @@ class SlotsGameTest {
         clickSlot(SlotsLayout.BET_DECREASE);
 
         String text = betDisplayText();
-        assertTrue(text.contains("1"), "Bet should not go below 1");
+        assertEquals("Bet: 1 Gold", text);
     }
 
     @Test void betIncreaseThenDecreaseRoundTrips() {
@@ -123,7 +123,7 @@ class SlotsGameTest {
         clickSlot(SlotsLayout.BET_DECREASE); // → 1
         clickSlot(SlotsLayout.BET_DECREASE); // stays 1
 
-        assertTrue(betDisplayText().contains("1"), "Bet should be back to 1");
+        assertEquals("Bet: 1 Gold", betDisplayText());
     }
 
     @Test void spinWithInsufficientFundsSendsMessageAndKeepsBalance() {
