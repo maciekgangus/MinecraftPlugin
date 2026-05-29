@@ -2,6 +2,7 @@ package dev.casino.gui;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 
 import java.util.Set;
 import java.util.UUID;
@@ -23,6 +24,10 @@ public final class DefaultGuiManager implements GuiManager {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         GuiMenu menu = active.get(player.getUniqueId());
         if (menu == null) return;
+        if (event.getView().getTopInventory().getType() != InventoryType.CHEST) {
+            cleanup(player.getUniqueId());
+            return;
+        }
         event.setCancelled(true);
         menu.handleClick(event);
     }
