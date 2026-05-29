@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 public final class BlackjackGame implements CasinoGame {
-
     private final PluginContext context;
     private final Map<UUID, BlackjackSession> sessions = new ConcurrentHashMap<>();
 
@@ -58,7 +57,7 @@ public final class BlackjackGame implements CasinoGame {
                     }
                 }));
 
-        builder.item(BlackjackLayout.BET_DEAL, new GuiItem(createItem(Material.ARROW, Component.text("PLAY", NamedTextColor.AQUA, TextDecoration.BOLD)),
+        builder.item(BlackjackLayout.BET_DEAL, new GuiItem(createItem(Material.GOLDEN_SWORD, Component.text("PLAY", NamedTextColor.AQUA, TextDecoration.BOLD)),
                 e -> initializeGame(player, currentBet)));
 
         builder.item(BlackjackLayout.RULE_BOOK, new GuiItem(createItem(Material.BOOK, Component.text("How to Play", NamedTextColor.AQUA)),
@@ -66,6 +65,8 @@ public final class BlackjackGame implements CasinoGame {
                     player.getInventory().addItem(createInstructionsBook());
                     player.sendMessage(Component.text("You received the Blackjack Guide!", NamedTextColor.GREEN));
                 }));
+
+        builder.item(BlackjackLayout.GAME_QUIT, new GuiItem(createItem(Material.ARROW, Component.text("BACK")), e -> context.openMainCasinoMenu(player)));
 
         context.gui().open(player, builder.build());
     }
@@ -75,6 +76,9 @@ public final class BlackjackGame implements CasinoGame {
             player.sendMessage(Component.text("You don't have enough gold!", NamedTextColor.RED));
             return;
         }
+
+        context.betting().getBlackjackStats(player).addBet(bet);
+        context.statsManager().saveStatsAsync();
 
         BlackjackSession session = new BlackjackSession(bet);
 
@@ -89,11 +93,14 @@ public final class BlackjackGame implements CasinoGame {
         // Check for Dealer Natural 21 (Push Rule)
         if (session.dealerHand.getValue() == BlackjackHand.MAX_VALUE) {
             context.economy().deposit(player, bet);
+            context.betting().getBlackjackStats(player).addWon(bet);
+            context.statsManager().saveStatsAsync();
             endGame(player, session, "Dealer has 21! It's a draw.");
         } else {
             openGameGui(player, session);
         }
     }
+
 
     @Override
     public void stop(Player player) {
@@ -218,15 +225,23 @@ public final class BlackjackGame implements CasinoGame {
         int dealerTotal = session.dealerHand.getValue();
 
         if (session.dealerHand.isBust()) {
-            context.economy().deposit(player, session.bet * 2);
-            endGame(player, session, "Dealer Bust! You win " + (session.bet * 2) + " gold.");
+            int win = session.bet * 2;
+            context.economy().deposit(player, win);
+            context.betting().getBlackjackStats(player).addWon(win);
+            context.statsManager().saveStatsAsync();
+            endGame(player, session, "Dealer Bust! You win " + win + " gold.");
         } else if (playerTotal > dealerTotal) {
-            context.economy().deposit(player, session.bet * 2);
-            endGame(player, session, "You win " + (session.bet * 2) + " gold!");
+            int win = session.bet * 2;
+            context.economy().deposit(player, win);
+            context.betting().getBlackjackStats(player).addWon(win);
+            context.statsManager().saveStatsAsync();
+            endGame(player, session, "You win " + win + " gold!");
         } else if (playerTotal < dealerTotal) {
             endGame(player, session, "Dealer wins.");
         } else {
             context.economy().deposit(player, session.bet);
+            context.betting().getBlackjackStats(player).addWon(session.bet);
+            context.statsManager().saveStatsAsync();
             endGame(player, session, "Push (Tie). Money back.");
         }
     }

@@ -2,6 +2,9 @@ package dev.casino.games.blackjack;
 
 public final class BlackjackLayout {
 
+    // Leave Game / Return To Betting Screen
+    public static final int GAME_QUIT = 53;
+
     // Betting Screen Slots
     public static final int BET_DECREASE = 20;
     public static final int BET_DISPLAY = 22;
@@ -14,7 +17,6 @@ public final class BlackjackLayout {
     public static final int GAME_STAND = 41;
     public static final int GAME_BET_DISPLAY = 49;
     public static final int GAME_PLAY_AGAIN = 50;
-    public static final int GAME_QUIT = 53;
 
     // Hand Row Starts
     public static final int DEALER_HAND_START = 0;

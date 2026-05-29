@@ -1,6 +1,8 @@
 package dev.casino.core;
 
+import dev.casino.economy.CasinoBettingData;
 import dev.casino.economy.EconomyManager;
+import dev.casino.economy.StatsManager;
 import dev.casino.games.GameRegistry;
 import dev.casino.gui.GuiManager;
 import dev.casino.gui.GuiMenu;
@@ -15,6 +17,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public record PluginContext(
         JavaPlugin plugin,
         EconomyManager economy,
+        CasinoBettingData betting,
+        StatsManager statsManager,
         GameRegistry games,
         GuiManager gui,
         GuiMenu mainCasinoMenu) {

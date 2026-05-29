@@ -102,6 +102,9 @@ public final class HorseRacingGame implements CasinoGame {
             return;
         }
         eco.withdraw(player, selectedHorse.cost());
+        context.betting().getHorseRacingStats(player).addBet(selectedHorse.cost());
+        context.statsManager().saveStatsAsync();
+
         player.sendMessage(Component.text(
             "The race begins! You bet on " + selectedHorse.name() + "."
         ));
@@ -154,6 +157,8 @@ public final class HorseRacingGame implements CasinoGame {
                             "Your horse won! You receive " + selectedHorse.payout() + " gold."
                         ));
                         eco.deposit(player, selectedHorse.payout());
+                        context.betting().getHorseRacingStats(player).addWon(selectedHorse.payout());
+                        context.statsManager().saveStatsAsync();
                     } else {
                         player.sendMessage(Component.text("Horse #" + winner + " won. Better luck next time."));
                     }

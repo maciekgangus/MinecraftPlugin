@@ -39,6 +39,12 @@ Players compete against a virtual dealer to reach a hand value as close to 21 as
     - **Push (Tie):** 1x the bet amount (Refund).
     - **Loss/Bust:** 0.
 
+## Statistics & Persistence
+
+- **Tracking:** Every bet and win is automatically recorded in the player's profile.
+- **Persistence:** Stats are saved asynchronously to `stats.yml` immediately after every round.
+- **Leaderboard:** Use `/leaderboard` to see the top-performing Blackjack players.
+
 ## Main Classes
 
 - **Game Controller:** `src/main/java/dev/casino/games/blackjack/BlackjackGame.java`
