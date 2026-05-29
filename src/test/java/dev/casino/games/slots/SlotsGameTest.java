@@ -142,6 +142,48 @@ class SlotsGameTest {
         assertEquals(balanceBefore, economy.getBalance(player), "Balance must not change on rejected spin");
     }
 
+    @Test void spinDeductsBetImmediately() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 5));
+        game.start(player);
+        int before = economy.getBalance(player);
+
+        clickSlot(SlotsLayout.SPIN);
+
+        assertEquals(before - 1, economy.getBalance(player), "Bet should be deducted on spin start");
+    }
+
+    @Test void spinBlocksSecondClickWhileSpinning() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 5));
+        game.start(player);
+        int before = economy.getBalance(player);
+
+        clickSlot(SlotsLayout.SPIN);
+        clickSlot(SlotsLayout.SPIN); // second click must be a no-op
+
+        assertEquals(before - 1, economy.getBalance(player), "Only one bet should be deducted");
+    }
+
+    @Test void spinResolvesAfterAnimation() {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 10));
+        game.start(player);
+
+        clickSlot(SlotsLayout.SPIN);
+
+        // animation: 30 frames × 2 ticks/frame, starting at tick 0
+        // frame 30 fires at server tick 58 → advance 62 to be safe
+        server.getScheduler().performTicks(62L);
+
+        // SPIN button should be re-enabled (not "SPINNING...")
+        ItemStack spinBtn = player.getOpenInventory().getTopInventory().getItem(SlotsLayout.SPIN);
+        assertNotNull(spinBtn);
+        String text = PlainTextComponentSerializer.plainText().serialize(
+                Objects.requireNonNull(spinBtn.getItemMeta().displayName()));
+        assertFalse(text.contains("SPINNING"), "Spin button should be re-enabled after animation completes");
+
+        // Result message should be queued
+        assertNotNull(player.nextComponentMessage(), "Player should receive a result message");
+    }
+
     // --- helpers ---
 
     private String betDisplayText() {
