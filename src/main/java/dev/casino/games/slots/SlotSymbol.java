@@ -42,6 +42,7 @@ public enum SlotSymbol {
 
     /** Returns total payout gold for given 3-reel result and bet amount. 0 = loss. */
     public static int evaluate(SlotSymbol[] reels, int bet) {
+        if (reels[0] == null || reels[1] == null || reels[2] == null) return 0;
         if (reels[0] == reels[1] && reels[1] == reels[2]) {
             return bet * reels[0].threeMultiplier;
         }
