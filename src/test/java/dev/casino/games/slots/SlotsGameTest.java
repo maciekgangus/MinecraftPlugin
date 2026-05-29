@@ -127,11 +127,19 @@ class SlotsGameTest {
     }
 
     @Test void spinWithInsufficientFundsSendsMessageAndKeepsBalance() {
-        game.start(player); // 0 gold
+        // Give 10 gold so the bet can be raised to 10 (BET_INCREASE guard: balance > bet)
+        player.getInventory().addItem(new ItemStack(Material.GOLD_INGOT, 10));
+        game.start(player);
+        // raise bet to 10 — requires 9 clicks from default bet of 1
+        for (int i = 0; i < 9; i++) clickSlot(SlotsLayout.BET_INCREASE);
+        // Remove 6 ingots so balance drops to 4, which is below the bet of 10
+        player.getInventory().removeItem(new ItemStack(Material.GOLD_INGOT, 6));
+        int balanceBefore = economy.getBalance(player);
+
         clickSlot(SlotsLayout.SPIN);
 
         assertNotNull(player.nextComponentMessage(), "Should receive error message");
-        assertEquals(0, economy.getBalance(player));
+        assertEquals(balanceBefore, economy.getBalance(player), "Balance must not change on rejected spin");
     }
 
     // --- helpers ---

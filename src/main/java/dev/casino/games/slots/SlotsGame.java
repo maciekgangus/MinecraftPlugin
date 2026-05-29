@@ -44,9 +44,9 @@ public final class SlotsGame implements CasinoGame {
         if (session == null) return;
         if (session.animationTask != null) {
             session.animationTask.cancel();
-            if (session.spinning) {
-                context.economy().deposit(player, session.bet);
-            }
+        }
+        if (session.spinning) {
+            context.economy().deposit(player, session.bet);
         }
     }
 
