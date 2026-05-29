@@ -139,6 +139,8 @@ public final class SlotsGame implements CasinoGame {
             public void run() {
                 // If session was replaced (player re-entered slots), stop silently
                 if (sessions.get(player.getUniqueId()) != session) {
+                    session.spinning = false;
+                    session.animationTask = null;
                     cancel();
                     return;
                 }
